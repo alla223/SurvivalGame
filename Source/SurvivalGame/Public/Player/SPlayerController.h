@@ -14,11 +14,7 @@ class SURVIVALGAME_API ASPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	FTimerHandle TimerHandle_Respawn;
 
-	void OnKilled();
-
-	void Respawn();
 
 
 };

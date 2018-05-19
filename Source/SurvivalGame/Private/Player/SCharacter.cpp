@@ -49,6 +49,7 @@ ASCharacter::ASCharacter(const class FObjectInitializer& ObjectInitializer)
 	/* Names as specified in the character skeleton */
 	WeaponAttachPoint = TEXT("WeaponSocket");
 
+	//
 }
 
 
@@ -233,6 +234,8 @@ void ASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	// Replicate to every client, no special condition required
 	DOREPLIFETIME(ASCharacter, Health);
 
+	DOREPLIFETIME(ASCharacter, CurrentWeapon);
+	DOREPLIFETIME(ASCharacter, Inventory);
 	/* If we did not display the current inventory on the player mesh we could optimize replication by using this replication condition. */
 	/* DOREPLIFETIME_CONDITION(ASCharacter, Inventory, COND_OwnerOnly);*/
 }
@@ -274,6 +277,36 @@ bool ASCharacter::IsFiring() const
 	return CurrentWeapon && CurrentWeapon->GetCurrentState() == EWeaponState::Firing;
 }
 
+// 어태치포인트 이름만 반환하는 함수 
+FName ASCharacter::GetInventoryAttachPoint(EInventorySlot Slot) const
+{
+	/* Return the socket name for the specified storage slot */
+	switch (Slot)
+	{
+	case EInventorySlot::Hands:
+		return WeaponAttachPoint;
+	default:
+		// Not implemented.
+		return "";
+	}
+}
+
+
+void ASCharacter::SetCurrentWeapon(class ASWeapon* NewWeapon)
+{
+	CurrentWeapon = NewWeapon;
+
+	if (NewWeapon)
+	{
+		NewWeapon->SetOwningPawn(this);
+	}
+}
+
+
+void ASCharacter::OnRep_CurrentWeapon(ASWeapon* LastWeapon)
+{
+	SetCurrentWeapon(CurrentWeapon);
+}
 
 
 ASWeapon* ASCharacter::GetCurrentWeapon() const
@@ -281,6 +314,49 @@ ASWeapon* ASCharacter::GetCurrentWeapon() const
 	return CurrentWeapon;
 }
 
+
+void ASCharacter::EquipWeapon(ASWeapon* Weapon)
+{
+	if (Weapon)
+	{
+
+		if (Role == ROLE_Authority)
+		{
+			SetCurrentWeapon(Weapon);
+		}
+		else
+		{
+			ServerEquipWeapon(Weapon);
+		}
+	}
+}
+
+
+bool ASCharacter::ServerEquipWeapon_Validate(ASWeapon* Weapon)
+{
+	return true;
+}
+
+
+void ASCharacter::ServerEquipWeapon_Implementation(ASWeapon* Weapon)
+{
+	EquipWeapon(Weapon);
+}
+
+void ASCharacter::AddWeapon(class ASWeapon* Weapon)
+{
+	if (Weapon && Role == ROLE_Authority)
+	{
+		Weapon->OnEnterInventory(this);
+		Inventory.AddUnique(Weapon);
+
+		// Equip first weapon in inventory
+		if (Inventory.Num() > 0 && CurrentWeapon == nullptr)
+		{
+			EquipWeapon(Inventory[0]);
+		}
+	}
+}
 
 
 
@@ -292,15 +368,16 @@ void ASCharacter::OnReload()
 	}
 }
 
-
+//입력 매핑 함수 
 void ASCharacter::OnStartFire()
 {
+	//스프린팅 중이라면 스프린팅 해제한다
 	if (IsSprinting())
 	{
 		SetSprinting(false);
 	}
 
-
+	//fire 함수 호출
 	StartWeaponFire();
 }
 
@@ -313,9 +390,11 @@ void ASCharacter::OnStopFire()
 
 void ASCharacter::StartWeaponFire()
 {
+	//Fire 제어 멤버변수 확인
 	if (!bWantsToFire)
 	{
 		bWantsToFire = true;
+		//Weapon ->StartFire()
 		if (CurrentWeapon)
 		{
 			CurrentWeapon->StartFire();

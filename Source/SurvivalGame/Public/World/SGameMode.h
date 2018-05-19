@@ -17,4 +17,19 @@ public:
 
 	ASGameMode(const FObjectInitializer& ObjectInitializer);
 
+	/* The default weapons to spawn with */
+	UPROPERTY(EditDefaultsOnly, Category = "Player")
+		TArray<TSubclassOf<class ASWeapon>> DefaultInventoryClass;
+
+
+
+protected:
+
+	/**
+	* Make sure pawn properties are back to default
+	* Also a good place to modify them on spawn
+	*/
+	virtual void SetPlayerDefaults(APawn* PlayerPawn) override;
+
+	virtual void SpawnDefaultInventory(APawn* PlayerPawn);
 };

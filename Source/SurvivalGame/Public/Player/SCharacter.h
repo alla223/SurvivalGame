@@ -3,6 +3,7 @@
 #pragma once
 
 #include "SBaseCharacter.h"
+#include "STypes.h"
 #include "SCharacter.generated.h"
 
 UCLASS()
@@ -138,7 +139,33 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	bool IsFiring() const;
 
-	//에러가능성
-	UPROPERTY(Transient)
+
+	/*어태치먼트하기위한 소켓이름 반환. 슬롯같은것들 바꾸지 않을거라 const Return socket name for attachments (to match the socket in the character skeleton) */
+	FName GetInventoryAttachPoint(EInventorySlot Slot) const;
+
+	//복제함.
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_CurrentWeapon)
 		class ASWeapon* CurrentWeapon;
+
+	/* OnRep functions can use a parameter to hold the previous value of the variable. Very useful when you need to handle UnEquip etc. */
+	UFUNCTION()
+		void OnRep_CurrentWeapon(ASWeapon* LastWeapon);
+
+
+	void SetCurrentWeapon(class ASWeapon* newWeapon);
+
+	void EquipWeapon(ASWeapon* Weapon);
+
+	UFUNCTION(Reliable, Server, WithValidation)
+		void ServerEquipWeapon(ASWeapon* Weapon);
+
+	void ServerEquipWeapon_Implementation(ASWeapon* Weapon);
+
+	bool ServerEquipWeapon_Validate(ASWeapon* Weapon);
+
+	void AddWeapon(class ASWeapon* Weapon);
+
+	/* All weapons/items the player currently holds */
+	UPROPERTY(Transient, Replicated)
+		TArray<ASWeapon*> Inventory;
 };

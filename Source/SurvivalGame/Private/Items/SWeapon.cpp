@@ -4,6 +4,7 @@
 #include "SWeapon.h"
 #include "SCharacter.h"
 #include "SPlayerController.h"
+#include "STypes.h"
 #include "Net/UnrealNetwork.h"
 
 ASWeapon::ASWeapon(const class FObjectInitializer& PCIP)
@@ -19,7 +20,8 @@ ASWeapon::ASWeapon(const class FObjectInitializer& PCIP)
 	Mesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	RootComponent = Mesh;
 
-	bIsEquipped = false;
+	//기본으로 Hand에 무기 장착할 거니까 true로 셋팅 추후 인벤토리 시스템 추가하면 그 때 false로 설정해서 착용 시 true로 바꾸던지 하겠다.
+	bIsEquipped = true;
 	CurrentState = EWeaponState::Idle;
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -29,7 +31,7 @@ ASWeapon::ASWeapon(const class FObjectInitializer& PCIP)
 	bNetUseOwnerRelevancy = true;
 
 	MuzzleAttachPoint = TEXT("MuzzleFlashSocket");
-	
+	StorageSlot = EInventorySlot::Hands;
 
 	ShotsPerMinute = 700;
 	StartAmmo = 999;
@@ -39,7 +41,7 @@ ASWeapon::ASWeapon(const class FObjectInitializer& PCIP)
 	NoEquipAnimDuration = 0.5f;
 }
 
-
+//simpactEffect override
 void ASWeapon::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -80,10 +82,48 @@ void ASWeapon::SetOwningPawn(ASCharacter* NewOwner)
 }
 
 
+void ASWeapon::OnRep_MyPawn()
+{
+	if (MyPawn)
+	{
+		OnEnterInventory(MyPawn);
+	}
+	//else
+	//{
+	//	OnLeaveInventory();
+
+	//}
+}
+
+
+//현재 폰에 메시를 붙인다.
+void ASWeapon::AttachMeshToPawn(EInventorySlot Slot)
+{
+	if (MyPawn)
+	{
+		USkeletalMeshComponent* PawnMesh = MyPawn->GetMesh();
+		//현재 캐릭터의 Hand 의 FName 얻어온다.
+		FName AttachPoint = MyPawn->GetInventoryAttachPoint(Slot);
+		Mesh->SetHiddenInGame(false);
+		//폰메쉬에 무기 붙인다.
+		Mesh->AttachToComponent(PawnMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachPoint);
+	}
+}
+
+
+void ASWeapon::OnEnterInventory(ASCharacter* NewOwner)
+{
+	SetOwningPawn(NewOwner);
+	AttachMeshToPawn(StorageSlot);
+}
 
 
 void ASWeapon::StartFire()
 {
+	//클라이언트 버전에서 serverRPC 호출한다. 서버에서 실행되고 현재 실행중인 서버에서 엔진 인스턴스가 담당하니까 서버가 role_Auturioty
+	//클라 버전에서는 반대로 보인다.
+	//아래 ServerStartFire()는 클라에서는 현재 Role이 Role_Authority보다 낮기 때문에 ServerStartFire를 호출할수 있다. 클라에서 호출했으니
+	//서버에서 실행되고 클라이언트로 복제된다 .클라의 RemoteRole은 Role_Authority다.
 	if (Role < ROLE_Authority)
 	{
 		ServerStartFire();
@@ -92,6 +132,7 @@ void ASWeapon::StartFire()
 	if (!bWantsToFire)
 	{
 		bWantsToFire = true;
+		//NewState = EWeaponState::Firing 로 설정
 		DetermineWeaponState();
 	}
 }
@@ -135,7 +176,7 @@ void ASWeapon::ServerStopFire_Implementation()
 	StopFire();
 }
 
-
+//Pawn이 존재하고 무기상태가 idel이거나 firing이고 재장전중이아니면 true 반환
 bool ASWeapon::CanFire() const
 {
 	bool bPawnCanFire = MyPawn && MyPawn->CanFire();

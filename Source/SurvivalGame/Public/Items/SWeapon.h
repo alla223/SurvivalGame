@@ -4,6 +4,7 @@
 
 #include "GameFramework/Actor.h"
 #include "SCharacter.h"
+#include "STypes.h"
 #include "SWeapon.generated.h"
 
 UENUM()
@@ -47,16 +48,20 @@ protected:
 	ASWeapon(const FObjectInitializer& ObjectInitializer);
 
 
+	/* The character socket to store this item at. */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+		EInventorySlot StorageSlot;
 
 	/** pawn owner */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_MyPawn)
 	class ASCharacter* MyPawn;
 
 	/** weapon mesh: 3rd person view */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	USkeletalMeshComponent* Mesh;
 
-
+	UFUNCTION()
+		void OnRep_MyPawn();
 
 public:
 
@@ -73,7 +78,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	class ASCharacter* GetPawnOwner() const;
 
-	
+	virtual void OnEnterInventory(ASCharacter* NewOwner);
+
 
 
 	/************************************************************************/
@@ -89,6 +95,9 @@ public:
 	EWeaponState GetCurrentState() const;
 
 	
+	/* You can assign default values to function parameters, these are then optional to specify/override when calling the function. */
+	void AttachMeshToPawn(EInventorySlot Slot = EInventorySlot::Hands);
+
 protected:
 
 	bool CanFire() const;
@@ -110,6 +119,7 @@ private:
 
 	virtual void HandleFiring();
 
+	//서버에서 실행된다. 현재 실행중인 서버가 Role_Authority를 가진다.
 	UFUNCTION(Reliable, Server, WithValidation)
 	void ServerStartFire();
 
@@ -131,6 +141,7 @@ private:
 
 	bool ServerHandleFiring_Validate();
 
+	//연발 사격
 	void OnBurstStarted();
 
 	void OnBurstFinished();
