@@ -21,6 +21,13 @@ ASGameMode::ASGameMode(const FObjectInitializer& ObjectInitializer)
 
 }
 
+void ASGameMode::Killed(AController* Killer, AController* VictimPlayer, APawn* VictimPawn, const UDamageType* DamageType)
+{
+	// Do nothing (can we used to apply score or keep track of kill count)
+}
+
+
+
 void ASGameMode::SetPlayerDefaults(APawn* PlayerPawn)
 {
 	Super::SetPlayerDefaults(PlayerPawn);

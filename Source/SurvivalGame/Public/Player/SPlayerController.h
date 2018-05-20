@@ -12,7 +12,7 @@ UCLASS()
 class SURVIVALGAME_API ASPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-
+		ASPlayerController(const FObjectInitializer& ObjectInitializer);
 public:
 
 

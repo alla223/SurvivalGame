@@ -71,12 +71,12 @@ void ASWeaponInstant::DealDamage(const FHitResult& Impact, const FVector& ShootD
 {
 	float ActualHitDamage = HitDamage;
 
-	/* Handle special damage location on the zombie body (types are setup in the Physics Asset of the zombie */
+	/* Handle special damage location on the player body (types are setup in the Physics Asset of the zombie */
 	USDamageType* DmgType = Cast<USDamageType>(DamageType->GetDefaultObject());
 	UPhysicalMaterial * PhysMat = Impact.PhysMaterial.Get();
 	if (PhysMat && DmgType)
 	{
-		if (PhysMat->SurfaceType == SURFACE_ZOMBIEHEAD)
+		if (PhysMat->SurfaceType == SURFACE_FLESHVURNERABLE)
 		{		
 			ActualHitDamage *= DmgType->GetHeadDamageModifier();	
 		}

@@ -47,6 +47,7 @@ void ASWeapon::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	/* Setup configuration */
+	//시간(초)당 발사 수 
 	TimeBetweenShots = 60.0f / ShotsPerMinute;
 	CurrentAmmo = FMath::Min(StartAmmo, MaxAmmo);
 	CurrentAmmoInClip = FMath::Min(MaxAmmoPerClip, StartAmmo);
@@ -248,7 +249,7 @@ void ASWeapon::HandleFiring()
 			SimulateWeaponFire();
 		}
 
-		if (MyPawn && MyPawn->IsLocallyControlled())
+		if (MyPawn && MyPawn->IsLocallyControlled()) 
 		{
 			FireWeapon();
 
@@ -281,7 +282,7 @@ void ASWeapon::HandleFiring()
 			OnBurstFinished();
 		}
 	}
-
+	//이것을 소유한 pawn에서 
 	if (MyPawn && MyPawn->IsLocallyControlled())
 	{
 		if (Role < ROLE_Authority)
@@ -298,11 +299,11 @@ void ASWeapon::HandleFiring()
 	}
 
 
-
+	//shot 한 이후의 시간을 추적
 	LastFireTime = GetWorld()->GetTimeSeconds();
 }
 
-
+//이펙트/ 발사 애님/ 발사 사운드
 void ASWeapon::SimulateWeaponFire()
 {
 	if (MuzzleFX)
@@ -319,7 +320,7 @@ void ASWeapon::SimulateWeaponFire()
 	PlayWeaponSound(FireSound);
 }
 
-
+//애님 중지
 void ASWeapon::StopSimulatingWeaponFire()
 {
 	if (bPlayingFireAnim)
@@ -375,6 +376,7 @@ void ASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 
 	DOREPLIFETIME_CONDITION(ASWeapon, CurrentAmmo, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASWeapon, CurrentAmmoInClip, COND_OwnerOnly);
+	//프로퍼티 복제하면서 BurstCounter 동기화하고 HandleFire 다룬다.
 	DOREPLIFETIME_CONDITION(ASWeapon, BurstCounter, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(ASWeapon, bPendingReload, COND_SkipOwner);
 }
@@ -435,6 +437,8 @@ void ASWeapon::OnBurstStarted()
 	if (LastFireTime > 0 && TimeBetweenShots > 0.0f &&
 		LastFireTime + TimeBetweenShots > GameTime)
 	{
+		// &ASWeapon::HandleFiring을 (LastFireTime + TimeBetweenShots - GameTime)= TimeBetweenShots ,즉 TimeBetweenShost에 호출 
+		//마지막 인자는 firstDelay로 처음에 마우스 홀드다운했을 때 발사까지의 시간이다.여기서는 설정 안하므로 누르자마자 발사된다.
 		GetWorldTimerManager().SetTimer(TimerHandle_HandleFiring, this, &ASWeapon::HandleFiring, LastFireTime + TimeBetweenShots - GameTime, false);
 	}
 	else
@@ -529,7 +533,9 @@ void ASWeapon::UseAmmo()
 
 int32 ASWeapon::GiveAmmo(int32 AddAmount)
 {
+	//필요한 ammo 개수 구한다  e.g) 30-14 = 16
 	const int32 MissingAmmo = FMath::Max(0, MaxAmmo - CurrentAmmo);
+	//충전량 
 	AddAmount = FMath::Min(AddAmount, MissingAmmo);
 	CurrentAmmo += AddAmount;
 
@@ -678,7 +684,7 @@ bool ASWeapon::ServerStopReload_Validate()
 	return true;
 }
 
-
+//서버에서 호출되어 클라에서 실행
 void ASWeapon::ClientStartReload_Implementation()
 {
 	StartReload();

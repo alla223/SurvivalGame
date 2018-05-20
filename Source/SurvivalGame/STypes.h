@@ -3,7 +3,6 @@
 #pragma once
 
 
-
 UENUM()
 enum class EInventorySlot : uint8
 {

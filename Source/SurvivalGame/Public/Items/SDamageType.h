@@ -30,6 +30,7 @@ public:
 
 	bool GetCanDieFrom();
 
+	//머리맞았을 때 데미지
 	float GetHeadDamageModifier();
 
 	float GetLimbDamageModifier();

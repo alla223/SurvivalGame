@@ -21,7 +21,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Player")
 		TArray<TSubclassOf<class ASWeapon>> DefaultInventoryClass;
 
-
+	virtual void Killed(AController* Killer, AController* VictimPlayer, APawn* VictimPawn, const UDamageType* DamageType);
 
 protected:
 

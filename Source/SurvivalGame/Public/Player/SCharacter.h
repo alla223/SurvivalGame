@@ -3,7 +3,6 @@
 #pragma once
 
 #include "SBaseCharacter.h"
-#include "STypes.h"
 #include "SCharacter.generated.h"
 
 UCLASS()

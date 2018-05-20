@@ -58,6 +58,7 @@ protected:
 
 	virtual void FireWeapon() override;
 
+	//신체 취약부위에 따라 추가데미지 다룬다.
 	void DealDamage(const FHitResult& Impact, const FVector& ShootDir);
 
 	bool ShouldDealDamage(AActor* TestActor) const;

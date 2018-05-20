@@ -24,12 +24,14 @@ void ASImpactEffect::PostInitializeComponents()
 	UPhysicalMaterial* HitPhysMat = SurfaceHit.PhysMaterial.Get();
 	EPhysicalSurface HitSurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitPhysMat);
 
+	//Hit surface impactFX 스폰
 	UParticleSystem* ImpactFX = GetImpactFX(HitSurfaceType);
 	if (ImpactFX)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(this, ImpactFX, GetActorLocation(), GetActorRotation());
 	}
 
+	//사운드 스폰
 	USoundCue* ImpactSound = GetImpactSound(HitSurfaceType);
 	if (ImpactSound)
 	{
@@ -48,7 +50,7 @@ void ASImpactEffect::PostInitializeComponents()
 	}
 }
 
-
+//FX
 UParticleSystem* ASImpactEffect::GetImpactFX(EPhysicalSurface SurfaceType) const
 {
 	switch (SurfaceType)
@@ -57,8 +59,10 @@ UParticleSystem* ASImpactEffect::GetImpactFX(EPhysicalSurface SurfaceType) const
 		return DefaultFX;
 	case SURFACE_FLESH:
 		return PlayerFleshFX;
+	case SURFACE_FLESHVURNERABLE:
+		return PlayerFleshFX;
 	case SURFACE_ZOMBIEBODY:
-	case SURFACE_ZOMBIEHEAD:
+	//case SURFACE_ZOMBIEHEAD:
 	case SURFACE_ZOMBIELIMB:
 		return ZombieFleshFX;
 	default:
@@ -66,7 +70,7 @@ UParticleSystem* ASImpactEffect::GetImpactFX(EPhysicalSurface SurfaceType) const
 	}
 }
 
-
+//Sound
 USoundCue* ASImpactEffect::GetImpactSound(EPhysicalSurface SurfaceType) const
 {
 	switch (SurfaceType)
@@ -75,8 +79,10 @@ USoundCue* ASImpactEffect::GetImpactSound(EPhysicalSurface SurfaceType) const
 		return DefaultSound;
 	case SURFACE_FLESH:
 		return PlayerFleshSound;
+	case SURFACE_FLESHVURNERABLE:
+		return PlayerFleshSound;
 	case SURFACE_ZOMBIEBODY:
-	case SURFACE_ZOMBIEHEAD:
+	//case SURFACE_ZOMBIEHEAD:
 	case SURFACE_ZOMBIELIMB:
 		return ZombieFleshSound;
 	default:
